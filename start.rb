@@ -2,6 +2,7 @@
 require 'erb'
 require 'excon'
 require 'logger'
+require 'digest/sha2'
 
 $logger = Logger.new(STDOUT, ENV['DEBUG'] ? Logger::DEBUG : Logger::INFO)
 
@@ -123,7 +124,7 @@ module Service
   end
 
   class Polipo < Base
-    def initialize(port, tor:)
+    def initialize(port, tor)
       super(port)
       @tor = tor
     end
@@ -212,11 +213,19 @@ module Service
 
   class Haproxy < Base
     attr_reader :backends
+    attr_reader :user
+    attr_reader :pass
 
-    def initialize(port = 5566)
+    def initialize(port = 5566, user = nil, pass = nil)
       @config_erb_path = "/usr/local/etc/haproxy.cfg.erb"
       @config_path = "/usr/local/etc/haproxy.cfg"
       @backends = []
+      @user = user
+
+      if not pass.nil?
+        @pass = pass.crypt("$6$" + rand(36**8).to_s(36))
+      end
+
       super(port)
     end
 
@@ -247,10 +256,13 @@ module Service
   end
 end
 
-haproxy = Service::Haproxy.new
+tor_proxy_port = ENV['TOR_PROXY_PORT'] || 5566
+tor_proxy_user = ENV['TOR_PROXY_USER']
+tor_proxy_pass = ENV['TOR_PROXY_PASSWORD']
+haproxy = Service::Haproxy.new(tor_proxy_port, tor_proxy_user, tor_proxy_pass)
 proxies = []
 
-tor_instances = ENV['tors'] || 10
+tor_instances = ENV['TOR_PROXY_INSTANCES'] || 10
 tor_instances.to_i.times.each do |id|
   proxy = Service::Proxy.new(id)
   haproxy.add_backend(proxy)

@@ -1,5 +1,10 @@
+<% if user.nil? %>
+userlist tor_user
+  user <%= user %> password <%= pass %>
+<% end %>
+
 global
-  maxconn 1024 
+  maxconn 1024
   daemon
   pidfile <%= pid_file %>
 
@@ -31,8 +36,17 @@ listen stats *:4444
 
 frontend rotating_proxies
   bind *:<%= port %>
+  <% if not user.nil? %>
+  acl tor_acl http_auth(tor_user)
+
+  http-request allow if tor_acl
+	http-request deny
+
+  use_backend tor if tor_acl
+  <% else %>
   default_backend tor
   option http_proxy
+  <% end %>
 
 backend tor
   option http_proxy
