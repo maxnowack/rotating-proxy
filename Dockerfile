@@ -1,7 +1,7 @@
-FROM ubuntu:14.04
+FROM ubuntu:18.04
 
 RUN apt-get update && \
-    apt-get install -y wget && \
+    apt-get install -y wget gnupg && \
     echo 'deb http://deb.torproject.org/torproject.org trusty main' | tee /etc/apt/sources.list.d/torproject.list && \
     wget https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc && \
     apt-key add A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc && \

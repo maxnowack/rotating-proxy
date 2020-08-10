@@ -97,11 +97,6 @@ module Service
 
     def start
       super
-      puts executable
-      puts port
-      puts control_port
-      puts data_directory
-      puts pid_file
       self.class.fire_and_forget(executable,
         "--SocksPort #{port}",
         "--ControlPort #{control_port}",
