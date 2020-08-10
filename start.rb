@@ -97,18 +97,22 @@ module Service
 
     def start
       super
+      puts executable
+      puts port
+      puts control_port
+      puts data_directory
+      puts pid_file
       self.class.fire_and_forget(executable,
         "--SocksPort #{port}",
-	"--ControlPort #{control_port}",
+        "--ControlPort #{control_port}",
         "--NewCircuitPeriod 15",
-	"--MaxCircuitDirtiness 15",
-	"--UseEntryGuards 0",
-	"--UseEntryGuardsAsDirGuards 0",
-	"--CircuitBuildTimeout 5",
-	"--ExitRelay 0",
-	"--RefuseUnknownExits 0",
-	"--ClientOnly 1",
-	"--AllowSingleHopCircuits 1",
+        "--MaxCircuitDirtiness 15",
+        "--UseEntryGuards 0",
+        "--UseEntryGuardsAsDirGuards 0",
+        "--CircuitBuildTimeout 5",
+        "--RefuseUnknownExits 0",
+        "--ClientOnly 1",
+        "--AllowSingleHopCircuits 1",
         "--DataDirectory #{data_directory}",
         "--PidFile #{pid_file}",
         "--Log \"warn syslog\"",
@@ -118,8 +122,8 @@ module Service
 
     def newnym
         self.class.fire_and_forget('/usr/local/bin/newnym.sh',
-				   "#{control_port}",
-				   "| logger -t 'newnym'")
+          "#{control_port}",
+          "| logger -t 'newnym'")
     end
   end
 
@@ -166,7 +170,7 @@ module Service
     def initialize(id)
       @id = id
       @tor = Tor.new(tor_port, tor_control_port)
-      @polipo = Polipo.new(polipo_port, tor: tor)
+      @polipo = Polipo.new(polipo_port, tor)
     end
 
     def start
