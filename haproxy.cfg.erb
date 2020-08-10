@@ -1,4 +1,4 @@
-<% if user.nil? %>
+<% if not user.nil? %>
 userlist tor_user
   user <%= user %> password <%= pass %>
 <% end %>
@@ -40,7 +40,7 @@ frontend rotating_proxies
   acl tor_acl http_auth(tor_user)
 
   http-request allow if tor_acl
-	http-request deny
+  http-request deny
 
   use_backend tor if tor_acl
   <% else %>
