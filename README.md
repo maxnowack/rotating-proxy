@@ -1,8 +1,6 @@
 docker-rotating-proxy
 =====================
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/mattes/rotating-proxy.svg)](https://hub.docker.com/r/mattes/rotating-proxy/)
-
 ```
                Docker Container
                -------------------------------------
@@ -18,18 +16,8 @@ Usage
 -----
 
 ```bash
-# build docker container
-docker build -t mattes/rotating-proxy:latest .
-
-# ... or pull docker container
-docker pull mattes/rotating-proxy:latest
-
 # start docker container
-docker run -d -p 5566:5566 -p 4444:4444 --env tors=25 mattes/rotating-proxy
-
-# test with ...
-curl --proxy 127.0.0.1:5566 http://echoip.com
-curl --proxy 127.0.0.1:5566 http://header.jsontest.com
+docker run -d -p 5566:5566 -p 4444:4444 -e TOR_PROXY_INSTANCES=25 michael34435/rotating-proxy
 
 # monitor
 http://127.0.0.1:4444/haproxy?stats
