@@ -2,6 +2,7 @@
 require 'erb'
 require 'excon'
 require 'logger'
+require 'time'
 require 'digest/sha2'
 
 $logger = Logger.new(STDOUT, ENV['DEBUG'] ? Logger::DEBUG : Logger::INFO)
@@ -160,18 +161,24 @@ module Service
 
   class Proxy
     attr_reader :id
+    attr_reader :time
+    attr_reader :expire
     attr_reader :tor, :polipo
 
-    def initialize(id)
+    def initialize(id, expire)
       @id = id
       @tor = Tor.new(tor_port, tor_control_port)
       @polipo = Polipo.new(polipo_port, tor)
+      @expire = expire.to_i
     end
 
     def start
       $logger.info "starting proxy id #{id}"
       @tor.start
       @polipo.start
+
+      # set launch time
+      @time = Time.now.utc
     end
 
     def stop
@@ -207,6 +214,10 @@ module Service
       Excon.get(test_url, proxy: "http://127.0.0.1:#{port}", :read_timeout => 10).status == 200
     rescue
       false
+    end
+
+    def valid?
+      (Time.now.utc - @time) > @expire
     end
   end
 
@@ -258,12 +269,13 @@ end
 tor_proxy_port = ENV['TOR_PROXY_PORT'] || 5566
 tor_proxy_user = ENV['TOR_PROXY_USER']
 tor_proxy_pass = ENV['TOR_PROXY_PASSWORD']
+tor_proxy_expire = ENV['TOR_PROXY_EXPIRE'] || 600
 haproxy = Service::Haproxy.new(tor_proxy_port, tor_proxy_user, tor_proxy_pass)
 proxies = []
 
 tor_instances = ENV['TOR_PROXY_INSTANCES'] || 10
 tor_instances.to_i.times.each do |id|
-  proxy = Service::Proxy.new(id)
+  proxy = Service::Proxy.new(id, tor_proxy_expire)
   haproxy.add_backend(proxy)
   proxy.start
   proxies << proxy
@@ -283,9 +295,9 @@ loop do
   $logger.info "testing proxies"
   proxies.each do |proxy|
     $logger.info "testing proxy #{proxy.id} (port #{proxy.port})"
-    proxy.restart unless proxy.working?
+    proxy.restart unless proxy.working? && proxy.valid?
   end
 
-  $logger.info "sleeping for 60 seconds"
-  sleep 60
+  $logger.info "sleeping for 1 seconds"
+  sleep 1
 end

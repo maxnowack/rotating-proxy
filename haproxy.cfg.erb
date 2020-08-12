@@ -9,7 +9,7 @@ global
   pidfile <%= pid_file %>
 
 defaults
-  mode http
+  mode    http
   maxconn 1024
   option  httplog
   option  dontlognull
@@ -23,7 +23,7 @@ listen stats
   bind            *:4444
   mode            http
   log             global
-  maxconn 10
+  maxconn         10
   clitimeout      100s
   srvtimeout      100s
   contimeout      100s
@@ -45,8 +45,10 @@ frontend rotating_proxies
   default_backend tor
 
 backend tor
-  balance leastconn # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#balance
+  balance leastconn
 
   <% backends.each do |b| %>
   server <%= b[:name] %><%= b[:port] %> <%= b[:addr] %>:<%= b[:port] %>
   <% end %>
+
+  http-response set-header X-Server %s
