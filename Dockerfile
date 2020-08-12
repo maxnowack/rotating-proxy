@@ -1,6 +1,5 @@
 FROM ubuntu:18.04
 
-
 COPY start.rb /usr/local/bin/start.rb
 COPY newnym.sh /usr/local/bin/newnym.sh
 COPY haproxy.cfg.erb /usr/local/etc/haproxy.cfg.erb
@@ -25,4 +24,4 @@ RUN apt-get update && \
 
 EXPOSE 5566 4444
 
-ENTRYPOINT ["start.rb"]
+CMD /usr/local/bin/start.rb
