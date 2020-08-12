@@ -57,7 +57,7 @@ module Service
       end
     end
 
-    def self.kill(pid, signal='SIGKILL')
+    def self.kill(pid, signal='SIGINT')
       Process.kill(signal, pid)
     end
 
@@ -162,14 +162,12 @@ module Service
   class Proxy
     attr_reader :id
     attr_reader :time
-    attr_reader :expire
     attr_reader :tor, :polipo
 
-    def initialize(id, expire)
+    def initialize(id)
       @id = id
       @tor = Tor.new(tor_port, tor_control_port)
       @polipo = Polipo.new(polipo_port, tor)
-      @expire = expire.to_i
     end
 
     def start
@@ -217,7 +215,9 @@ module Service
     end
 
     def valid?
-      (Time.now.utc - @time) > (@expire * 60)
+      expire = ENV['TOR_PROXY_EXPIRE'] || 10
+
+      (Time.now.utc - @time) > (expire.to_i * 60)
     end
   end
 
@@ -226,11 +226,13 @@ module Service
     attr_reader :user
     attr_reader :pass
 
-    def initialize(port = 5566, user = nil, pass = nil)
+    def initialize
       @config_erb_path = "/usr/local/etc/haproxy.cfg.erb"
       @config_path = "/usr/local/etc/haproxy.cfg"
       @backends = []
-      @user = user
+      @user = ENV['TOR_PROXY_USER']
+      port = ENV['TOR_PROXY_PORT'] || 5566
+      pass = ENV['TOR_PROXY_PASSWORD']
 
       if not pass.nil?
         @pass = pass.crypt("$6$" + rand(36**8).to_s(36))
@@ -266,16 +268,12 @@ module Service
   end
 end
 
-tor_proxy_port = ENV['TOR_PROXY_PORT'] || 5566
-tor_proxy_user = ENV['TOR_PROXY_USER']
-tor_proxy_pass = ENV['TOR_PROXY_PASSWORD']
-tor_proxy_expire = ENV['TOR_PROXY_EXPIRE'] || 600
-haproxy = Service::Haproxy.new(tor_proxy_port, tor_proxy_user, tor_proxy_pass)
+haproxy = Service::Haproxy.new
 proxies = []
 
 tor_instances = ENV['TOR_PROXY_INSTANCES'] || 10
 tor_instances.to_i.times.each do |id|
-  proxy = Service::Proxy.new(id, tor_proxy_expire)
+  proxy = Service::Proxy.new(id)
   haproxy.add_backend(proxy)
   proxy.start
   proxies << proxy
