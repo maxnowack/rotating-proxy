@@ -57,7 +57,7 @@ module Service
       end
     end
 
-    def self.kill(pid, signal='SIGINT')
+    def self.kill(pid, signal='SIGHUP')
       Process.kill(signal, pid)
     end
 
