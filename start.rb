@@ -57,7 +57,7 @@ module Service
       end
     end
 
-    def self.kill(pid, signal='SIGHUP')
+    def self.kill(pid, signal='SIGKILL')
       Process.kill(signal, pid)
     end
 
@@ -217,7 +217,7 @@ module Service
     end
 
     def valid?
-      (Time.now.utc - @time) > @expire
+      (Time.now.utc - @time) > (@expire * 60)
     end
   end
 
@@ -295,9 +295,9 @@ loop do
   $logger.info "testing proxies"
   proxies.each do |proxy|
     $logger.info "testing proxy #{proxy.id} (port #{proxy.port})"
-    proxy.restart unless proxy.working? && proxy.valid?
+    proxy.restart unless proxy.valid? && proxy.working?
   end
 
-  $logger.info "sleeping for 1 seconds"
-  sleep 1
+  $logger.info "sleeping for 60 seconds"
+  sleep 60
 end
